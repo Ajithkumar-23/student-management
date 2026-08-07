@@ -12,57 +12,120 @@ spec:
     matchLabels:
       app: mysql
 
+
   template:
 
     metadata:
+
       labels:
         app: mysql
+
 
     spec:
 
       containers:
 
-        - name: mysql
+      - name: mysql
 
-          image: mysql:8.0
+        image: mysql:8.0
 
-          ports:
-            - containerPort: 3306
 
-          env:
+        ports:
 
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_ROOT_PASSWORD
+        - containerPort: 3306
 
-            - name: MYSQL_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_DATABASE
 
-            - name: MYSQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_USER
 
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_PASSWORD
+        env:
 
-          volumeMounts:
 
-            - name: mysql-storage
-              mountPath: /var/lib/mysql
+        - name: MYSQL_ROOT_PASSWORD
 
-      volumes:
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_ROOT_PASSWORD
+
+
+
+        - name: MYSQL_DATABASE
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_DATABASE
+
+
+
+        - name: MYSQL_USER
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_USER
+
+
+
+        - name: MYSQL_PASSWORD
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_PASSWORD
+
+
+
+
+        volumeMounts:
+
 
         - name: mysql-storage
 
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+          mountPath: /var/lib/mysql
+
+
+
+
+        readinessProbe:
+
+          exec:
+
+            command:
+
+            - mysqladmin
+
+            - ping
+
+            - "-h"
+
+            - "localhost"
+
+
+          initialDelaySeconds: 30
+
+          periodSeconds: 10
+
+
+
+
+      volumes:
+
+
+      - name: mysql-storage
+
+
+        persistentVolumeClaim:
+
+          claimName: mysql-pvc

@@ -4,55 +4,94 @@ kind: Deployment
 metadata:
   name: student-app
 
+
 spec:
 
   replicas: 2
 
+
   selector:
+
     matchLabels:
+
       app: student-app
+
+
 
   template:
 
+
     metadata:
+
       labels:
+
         app: student-app
+
+
 
     spec:
 
+
       containers:
 
-        - name: student-app
 
-          image: ajithkumar242/student-management:latest
+      - name: student-app
 
-          imagePullPolicy: Always
 
-          ports:
-            - containerPort: 5000
+        image: ajithkumar242/student-management:latest
 
-          env:
 
-            - name: DB_HOST
-              value: mysql-service
+        imagePullPolicy: Always
 
-            - name: DB_PORT
-              value: "3306"
 
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_USER
 
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_PASSWORD
+        ports:
 
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_DATABASE
+
+        - containerPort: 5000
+
+
+
+
+        env:
+
+
+        - name: DB_HOST
+
+          value: mysql-service
+
+
+
+        - name: DB_USER
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_USER
+
+
+
+        - name: DB_PASSWORD
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_PASSWORD
+
+
+
+        - name: DB_NAME
+
+          valueFrom:
+
+            secretKeyRef:
+
+              name: mysql-secret
+
+              key: MYSQL_DATABASE
