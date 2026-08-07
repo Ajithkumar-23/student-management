@@ -10,69 +10,23 @@ app = Flask(__name__)
 CORS(app)
 
 
-def get_db_connection():
+
+def get_connection():
 
     return mysql.connector.connect(
 
-        host=os.getenv("DB_HOST", "mysql-service"),
+        host=os.getenv("DB_HOST","mysql-service"),
 
-        user=os.getenv("DB_USER", "studentuser"),
+        user=os.getenv("DB_USER","studentuser"),
 
-        password=os.getenv("DB_PASSWORD", "studentpass"),
+        password=os.getenv("DB_PASSWORD","studentpass"),
 
-        database=os.getenv("DB_NAME", "studentdb"),
+        database=os.getenv("DB_NAME","studentdb"),
 
         port=3306
 
     )
 
-
-
-def initialize_database():
-
-    for attempt in range(15):
-
-        try:
-
-            connection = get_db_connection()
-
-            cursor = connection.cursor()
-
-
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS students (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    email VARCHAR(100) NOT NULL,
-                    course VARCHAR(100) NOT NULL
-                )
-            """)
-
-
-            connection.commit()
-
-            cursor.close()
-
-            connection.close()
-
-
-            print("Database initialized successfully")
-
-            return
-
-
-        except mysql.connector.Error as error:
-
-
-            print(f"Database connection failed: {error}")
-
-            print("Retrying in 5 seconds...")
-
-            time.sleep(5)
-
-
-
-    print("Could not connect to database")
 
 
 
@@ -82,199 +36,141 @@ def home():
 
     return jsonify({
 
-        "message": "Student Management API is running"
+        "message":"Student Management API is running"
 
     })
 
 
 
 
-@app.route("/students", methods=["GET"])
+
+@app.route("/students",methods=["GET"])
 def get_students():
 
-    try:
 
-        connection = get_db_connection()
+    conn=get_connection()
 
-        cursor = connection.cursor(dictionary=True)
-
-
-        cursor.execute("SELECT * FROM students")
-
-        students = cursor.fetchall()
+    cursor=conn.cursor(dictionary=True)
 
 
-        cursor.close()
-
-        connection.close()
+    cursor.execute("SELECT * FROM students")
 
 
-        return jsonify(students)
+    data=cursor.fetchall()
 
 
+    cursor.close()
 
-    except mysql.connector.Error as error:
+    conn.close()
 
 
-        return jsonify({
-
-            "error": str(error)
-
-        }), 500
+    return jsonify(data)
 
 
 
 
 
-@app.route("/students", methods=["POST"])
+
+@app.route("/students",methods=["POST"])
 def add_student():
 
-    try:
 
-        data = request.get_json()
-
-
-        name = data.get("name")
-
-        email = data.get("email")
-
-        course = data.get("course")
+    data=request.get_json()
 
 
+    name=data["name"]
 
-        if not name or not email or not course:
+    email=data["email"]
 
-            return jsonify({
-
-                "error": "Name, email and course are required"
-
-            }), 400
+    course=data["course"]
 
 
 
+    conn=get_connection()
 
-        connection = get_db_connection()
-
-        cursor = connection.cursor()
-
+    cursor=conn.cursor()
 
 
-        query = """
 
-        INSERT INTO students(name,email,course)
-
-        VALUES(%s,%s,%s)
+    cursor.execute(
 
         """
+        INSERT INTO students(name,email,course)
+        VALUES(%s,%s,%s)
+        """,
 
+        (name,email,course)
 
+    )
 
-        cursor.execute(
 
-            query,
+    conn.commit()
 
-            (name,email,course)
 
-        )
+    student_id=cursor.lastrowid
 
 
+    cursor.close()
 
-        connection.commit()
+    conn.close()
 
 
 
-        student_id = cursor.lastrowid
+    return jsonify({
 
+        "message":"Student added successfully",
 
+        "id":student_id
 
-        cursor.close()
+    })
 
-        connection.close()
 
 
 
-        return jsonify({
 
-            "message":"Student added successfully",
 
-            "id":student_id
 
-        }),201
+@app.route("/students/<int:id>",methods=["DELETE"])
+def delete_student(id):
 
 
+    conn=get_connection()
 
+    cursor=conn.cursor()
 
-    except mysql.connector.Error as error:
 
+    cursor.execute(
 
-        return jsonify({
+        "DELETE FROM students WHERE id=%s",
 
-            "error":str(error)
+        (id,)
 
-        }),500
+    )
 
 
+    conn.commit()
 
 
+    cursor.close()
 
-@app.route("/students/<int:student_id>", methods=["DELETE"])
-def delete_student(student_id):
+    conn.close()
 
-    try:
 
-        connection = get_db_connection()
 
-        cursor = connection.cursor()
+    return jsonify({
 
+        "message":"Student deleted successfully"
 
+    })
 
-        cursor.execute(
 
-            "DELETE FROM students WHERE id=%s",
 
-            (student_id,)
 
-        )
 
 
 
-        connection.commit()
+if __name__=="__main__":
 
-
-        cursor.close()
-
-        connection.close()
-
-
-
-        return jsonify({
-
-            "message":"Student deleted successfully"
-
-        })
-
-
-
-    except mysql.connector.Error as error:
-
-
-        return jsonify({
-
-            "error":str(error)
-
-        }),500
-
-
-
-
-
-# Initialize database before starting app
-
-initialize_database()
-
-
-
-if __name__ == "__main__":
 
     app.run(
 
