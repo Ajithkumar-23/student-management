@@ -1,0 +1,55 @@
+name: Application Validation
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  validate:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install Validation Tools
+        run: |
+          pip install pyyaml
+
+      - name: Validate Python
+        working-directory: backend
+        run: |
+          python validate.py
+
+      - name: Validate Kubernetes YAML
+        run: |
+          python - <<'PY'
+          import yaml
+          import glob
+
+          for file in glob.glob("kubernetes/*.yaml"):
+              with open(file, "r") as f:
+                  list(yaml.safe_load_all(f))
+
+              print(f"Validated: {file}")
+
+          print("Kubernetes YAML validation completed")
+          PY

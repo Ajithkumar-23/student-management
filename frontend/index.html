@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Management System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+            width: 28%;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background: #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Student Management System</h1>
+
+    <div>
+        <input
+            type="text"
+            id="name"
+            placeholder="Student Name"
+        >
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Email"
+        >
+
+        <input
+            type="text"
+            id="course"
+            placeholder="Course"
+        >
+
+        <button onclick="addStudent()">
+            Add Student
+        </button>
+    </div>
+
+    <h2>Students</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Course</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody id="studentTable">
+        </tbody>
+    </table>
+
+</div>
+
+<script>
+
+const API_URL = "http://localhost:30080";
+
+
+async function loadStudents() {
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/students`
+        );
+
+        const students = await response.json();
+
+        const table =
+            document.getElementById("studentTable");
+
+        table.innerHTML = "";
+
+        students.forEach(student => {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${student.id}</td>
+                <td>${student.name}</td>
+                <td>${student.email}</td>
+                <td>${student.course}</td>
+                <td>
+                    <button
+                        onclick="deleteStudent(${student.id})">
+                        Delete
+                    </button>
+                </td>
+            `;
+
+            table.appendChild(row);
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Unable to connect to backend");
+
+    }
+}
+
+
+async function addStudent() {
+
+    const name =
+        document.getElementById("name").value;
+
+    const email =
+        document.getElementById("email").value;
+
+    const course =
+        document.getElementById("course").value;
+
+
+    if (!name || !email || !course) {
+
+        alert("Please fill all fields");
+
+        return;
+    }
+
+
+    try {
+
+        await fetch(
+            `${API_URL}/students`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    course: course
+                })
+            }
+        );
+
+
+        document.getElementById("name").value = "";
+        document.getElementById("email").value = "";
+        document.getElementById("course").value = "";
+
+        loadStudents();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Failed to add student");
+
+    }
+}
+
+
+async function deleteStudent(id) {
+
+    try {
+
+        await fetch(
+            `${API_URL}/students/${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        loadStudents();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Failed to delete student");
+
+    }
+}
+
+
+loadStudents();
+
+</script>
+
+</body>
+</html>
